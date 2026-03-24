@@ -2,7 +2,19 @@ let tickets = [];
 let currentEscalation = "L1 - Reemplazo Menor";
 const TOTAL_STEPS = 6;
 
-// NAVEGACIÓN
+// MODAL SYSTEM
+function showAlert(title, message, icon = "⚠️") {
+    document.getElementById('modal-title').innerText = title;
+    document.getElementById('modal-message').innerText = message;
+    document.getElementById('modal-icon').innerText = icon;
+    document.getElementById('custom-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('custom-modal').classList.add('hidden');
+}
+
+// NAVEGACIÓN SPA
 function showView(viewId) {
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById(viewId).classList.remove('hidden');
@@ -10,7 +22,7 @@ function showView(viewId) {
 
 function startFlow(service) {
     if (service === 'perifericos') {
-        currentEscalation = "L1 - Reemplazo Menor"; // Reset default
+        currentEscalation = "L1 - Reemplazo Menor";
         showView('flow-view');
         nextStep(1);
     } else {
@@ -26,26 +38,17 @@ function nextStep(step) {
     document.querySelectorAll('#flow-view .step').forEach(s => s.classList.remove('active'));
     document.getElementById(`step-${step}`).classList.add('active');
     document.getElementById('progress-bar').style.width = (step / TOTAL_STEPS * 100) + '%';
-    
-    // Actualizar diagnóstico preliminar en el paso final
     if(step === 6) document.getElementById('hw-diag-pre').innerText = currentEscalation;
 }
 
 function setEscalation(type) { currentEscalation = type; }
 
 function addTicket(name, depto, diagnosis) {
-    // Cálculo de SLA según el tipo de diagnóstico del documento
-    let sla = "15 MIN"; // Triage inicial
-    if(diagnosis.includes("L1")) sla = "2 Horas";
-    if(diagnosis.includes("L2")) sla = "4 Horas";
-    if(diagnosis.includes("L4")) sla = "Garantía Fabricante";
-
     tickets.push({
         id: "TIC-" + Math.floor(1000 + Math.random() * 9000),
         solicitante: name,
         departamento: depto,
         diagnostico: diagnosis,
-        sla: sla,
         estado: "Abierto",
         fecha: new Date().toLocaleString('es-SV'),
         tipo: depto.includes('Hardware') ? 'hardware' : 'cloud'
@@ -55,17 +58,18 @@ function addTicket(name, depto, diagnosis) {
 
 function generateTicket(depto) {
     const name = document.getElementById('user-name').value;
-    if (!name.trim()) return alert("Por favor, ingrese su nombre completo.");
+    if (!name.trim()) return showAlert("Atención", "Por favor, ingrese su nombre completo.");
     addTicket(name, depto, currentEscalation);
     document.getElementById('user-name').value = "";
     showView('home-view');
-    alert("Ticket creado exitosamente siguiendo los criterios SOP.");
+    showAlert("¡Éxito!", "Ticket creado correctamente.", " ");
 }
 
 // LOGICA ONEDRIVE
 function branchOneDrive(type) {
     document.getElementById('od-step-1').classList.remove('active');
-    document.getElementById(`od-step-${type}-1`).classList.add('active');
+    const nextId = type === 'cuota' ? 'od-step-cuota-1' : 'od-step-permisos-1';
+    document.getElementById(nextId).classList.add('active');
     document.getElementById('od-progress-bar').style.width = '60%';
 }
 
@@ -79,19 +83,19 @@ function prepareTicketOD(diagnosis) {
 
 function generateTicketOD() {
     const name = document.getElementById('od-user-name').value;
-    if (!name.trim()) return alert("Ingrese su nombre.");
+    if (!name.trim()) return showAlert("Atención", "Por favor, ingrese su nombre completo.");
     addTicket(name, "Soporte Cloud", currentEscalation);
     document.getElementById('od-user-name').value = "";
     showView('home-view');
-    alert("Incidente de OneDrive registrado para revisión de Nivel 1.");
+    showAlert("¡Éxito!", "Reporte enviado exitosamente.", " ");
 }
 
 function solvedAction() {
-    alert("¡Deflexión Exitosa! El problema se resolvió mediante el Portal Web de Nivel 0.");
+    showAlert("¡Excelente!", "Has resuelto el problema de forma autónoma (Nivel 0).", " ");
     showView('home-view');
 }
 
-// DASHBOARD & KANBAN
+// DASHBOARD & KANBAN (DRAG & DROP)
 function showDashboard() {
     showView('dashboard-view');
     switchDashboardView('table');
@@ -113,7 +117,6 @@ function renderTable() {
             <td>${t.solicitante}</td>
             <td><span class="badge-service bg-${t.tipo}">${t.departamento}</span></td>
             <td>${t.diagnostico}</td>
-            <td><span style="color:#d32f2f; font-weight:700">${t.sla}</span></td>
             <td><strong>${t.estado}</strong></td>
         </tr>
     `).join('');
@@ -135,14 +138,12 @@ function renderKanban() {
             <span class="badge-service bg-${t.tipo}">${t.departamento}</span><br>
             <strong>${t.id}</strong>
             <p>${t.solicitante}</p>
-            <small>SLA: ${t.sla}</small><br>
-            <small>${t.diagnostico}</small>
+            <small style="color:#64748b">${t.diagnostico}</small>
         `;
         cols[t.estado]?.appendChild(card);
     });
 }
 
-// DRAG & DROP
 function allowDrop(ev) { ev.preventDefault(); }
 function drop(ev) {
     ev.preventDefault();
@@ -156,11 +157,11 @@ function drop(ev) {
     }
 }
 
-// EXPORTACIÓN
+// EXCEL (CORREGIDO UTF-8 BOM PARA ACENTOS)
 function exportToExcel() {
-    if (!tickets.length) return alert("Sin datos.");
-    let csv = "\ufeffID,Solicitante,Departamento,Diagnostico,SLA,Estado,Fecha\n" + 
-              tickets.map(t => `${t.id},${t.solicitante},${t.departamento},${t.diagnostico},${t.sla},${t.estado},${t.fecha}`).join("\n");
+    if (!tickets.length) return showAlert("Sin datos", "No hay registros para exportar.");
+    let csv = "\ufeffID,Solicitante,Departamento,Diagnostico,Estado,Fecha\n" + 
+              tickets.map(t => `${t.id},${t.solicitante},${t.departamento},${t.diagnostico},${t.estado},${t.fecha}`).join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     link.download = "Reporte_Incidentes_UMA.csv";
