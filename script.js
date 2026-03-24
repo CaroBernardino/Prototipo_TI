@@ -2,7 +2,7 @@ let tickets = [];
 let currentEscalation = "L1 - Reemplazo Menor";
 const TOTAL_STEPS = 6;
 
-// MODAL PERSONALIZADO
+// MODAL SYSTEM
 function showAlert(title, message, icon = "⚠️") {
     document.getElementById('modal-title').innerText = title;
     document.getElementById('modal-message').innerText = message;
@@ -66,15 +66,19 @@ function generateTicket(depto) {
     addTicket(name, depto, currentEscalation);
     document.getElementById('user-name').value = "";
     showView('home-view');
-    showAlert("¡Éxito!", "Ticket creado bajo los protocolos SOP.", "✅");
+    showAlert("¡Éxito!", "Ticket creado correctamente.", "✅");
 }
 
-// LOGICA ONEDRIVE
+// LOGICA ONEDRIVE (CON 3 RAMAS)
 function branchOneDrive(type) {
     document.getElementById('od-step-1').classList.remove('active');
-    const nextId = type === 'cuota' ? 'od-step-cuota-1' : 'od-step-permisos-1';
-    document.getElementById(nextId).classList.add('active');
-    document.getElementById('od-progress-bar').style.width = '60%';
+    if(type === 'cuota') {
+        document.getElementById('od-step-cuota-1').classList.add('active');
+        document.getElementById('od-progress-bar').style.width = '60%';
+    } else {
+        document.getElementById('od-step-permisos-1').classList.add('active');
+        document.getElementById('od-progress-bar').style.width = '60%';
+    }
 }
 
 function prepareTicketOD(diagnosis) {
@@ -91,11 +95,11 @@ function generateTicketOD() {
     addTicket(name, "Soporte Cloud", currentEscalation);
     document.getElementById('od-user-name').value = "";
     showView('home-view');
-    showAlert("¡Éxito!", "Reporte enviado exitosamente.", "✅");
+    showAlert("¡Éxito!", "Reporte enviado correctamente.", "✅");
 }
 
 function solvedAction() {
-    showAlert("¡Excelente!", "Has resuelto el problema de forma autónoma (Nivel 0).", "✨");
+    showAlert("¡Excelente!", "Deflexión exitosa. Has resuelto el problema de forma autónoma.", "✨");
     showView('home-view');
 }
 
@@ -134,7 +138,7 @@ function renderKanban() {
         card.draggable = true;
         card.id = `card-${t.id}`;
         card.ondragstart = (ev) => ev.dataTransfer.setData("text", ev.target.id);
-        card.innerHTML = `<span class="badge-service bg-${t.tipo}">${t.departamento}</span><br><strong>${t.id}</strong><p>${t.solicitante}</p><small>SLA: ${t.sla}</small><br><small>${t.diagnostico}</small>`;
+        card.innerHTML = `<span class="badge-service bg-${t.tipo}">${t.departamento}</span><br><strong>${t.id}</strong><p>${t.solicitante}</p><small>SLA: ${t.sla}</small><br><small style="color:#64748b">${t.diagnostico}</small>`;
         cols[t.estado]?.appendChild(card);
     });
 }
@@ -152,7 +156,6 @@ function drop(ev) {
     }
 }
 
-// EXCEL (CORREGIDO UTF-8 BOM)
 function exportToExcel() {
     if (!tickets.length) return showAlert("Sin datos", "No hay registros para exportar.");
     let csv = "\ufeffID,Solicitante,Departamento,Diagnostico,SLA,Estado,Fecha\n" + 
