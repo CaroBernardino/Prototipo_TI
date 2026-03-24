@@ -2,7 +2,7 @@ let tickets = [];
 let currentEscalation = "L1 - Reemplazo Menor";
 const TOTAL_STEPS = 6;
 
-// MODAL SYSTEM
+// MODAL PERSONALIZADO
 function showAlert(title, message, icon = "⚠️") {
     document.getElementById('modal-title').innerText = title;
     document.getElementById('modal-message').innerText = message;
@@ -10,11 +10,9 @@ function showAlert(title, message, icon = "⚠️") {
     document.getElementById('custom-modal').classList.remove('hidden');
 }
 
-function closeModal() {
-    document.getElementById('custom-modal').classList.add('hidden');
-}
+function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
 
-// NAVEGACIÓN SPA
+// NAVEGACIÓN
 function showView(viewId) {
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     document.getElementById(viewId).classList.remove('hidden');
@@ -29,7 +27,7 @@ function startFlow(service) {
         showView('onedrive-flow');
         document.querySelectorAll('#onedrive-flow .step').forEach(s => s.classList.remove('active'));
         document.getElementById('od-step-1').classList.add('active');
-        document.getElementById('od-progress-bar').style.width = '20%';
+        document.getElementById('od-progress-bar').style.width = '25%';
     }
 }
 
@@ -44,11 +42,17 @@ function nextStep(step) {
 function setEscalation(type) { currentEscalation = type; }
 
 function addTicket(name, depto, diagnosis) {
+    let sla = "15 MIN";
+    if(diagnosis.includes("L1")) sla = "2 Horas";
+    if(diagnosis.includes("L2")) sla = "4 Horas";
+    if(diagnosis.includes("L4")) sla = "Garantía";
+
     tickets.push({
         id: "TIC-" + Math.floor(1000 + Math.random() * 9000),
         solicitante: name,
         departamento: depto,
         diagnostico: diagnosis,
+        sla: sla,
         estado: "Abierto",
         fecha: new Date().toLocaleString('es-SV'),
         tipo: depto.includes('Hardware') ? 'hardware' : 'cloud'
@@ -62,7 +66,7 @@ function generateTicket(depto) {
     addTicket(name, depto, currentEscalation);
     document.getElementById('user-name').value = "";
     showView('home-view');
-    showAlert("¡Éxito!", "Ticket creado correctamente.", " ");
+    showAlert("¡Éxito!", "Ticket creado bajo los protocolos SOP.", "✅");
 }
 
 // LOGICA ONEDRIVE
@@ -87,19 +91,16 @@ function generateTicketOD() {
     addTicket(name, "Soporte Cloud", currentEscalation);
     document.getElementById('od-user-name').value = "";
     showView('home-view');
-    showAlert("¡Éxito!", "Reporte enviado exitosamente.", " ");
+    showAlert("¡Éxito!", "Reporte enviado exitosamente.", "✅");
 }
 
 function solvedAction() {
-    showAlert("¡Excelente!", "Has resuelto el problema de forma autónoma (Nivel 0).", " ");
+    showAlert("¡Excelente!", "Has resuelto el problema de forma autónoma (Nivel 0).", "✨");
     showView('home-view');
 }
 
 // DASHBOARD & KANBAN (DRAG & DROP)
-function showDashboard() {
-    showView('dashboard-view');
-    switchDashboardView('table');
-}
+function showDashboard() { showView('dashboard-view'); switchDashboardView('table'); }
 
 function switchDashboardView(viewType) {
     const isTable = viewType === 'table';
@@ -117,6 +118,7 @@ function renderTable() {
             <td>${t.solicitante}</td>
             <td><span class="badge-service bg-${t.tipo}">${t.departamento}</span></td>
             <td>${t.diagnostico}</td>
+            <td><span style="color:#d32f2f; font-weight:700">${t.sla}</span></td>
             <td><strong>${t.estado}</strong></td>
         </tr>
     `).join('');
@@ -125,7 +127,6 @@ function renderTable() {
 function renderKanban() {
     const cols = { 'Abierto': document.querySelector('#col-Abierto .kanban-cards'), 'En Proceso': document.querySelector('#col-En-Proceso .kanban-cards'), 'Resuelto': document.querySelector('#col-Resuelto .kanban-cards') };
     Object.values(cols).forEach(c => c.innerHTML = "");
-
     tickets.forEach(t => {
         const card = document.createElement('div');
         const estClass = t.estado.replace(' ', '-').toLowerCase();
@@ -133,13 +134,7 @@ function renderKanban() {
         card.draggable = true;
         card.id = `card-${t.id}`;
         card.ondragstart = (ev) => ev.dataTransfer.setData("text", ev.target.id);
-        
-        card.innerHTML = `
-            <span class="badge-service bg-${t.tipo}">${t.departamento}</span><br>
-            <strong>${t.id}</strong>
-            <p>${t.solicitante}</p>
-            <small style="color:#64748b">${t.diagnostico}</small>
-        `;
+        card.innerHTML = `<span class="badge-service bg-${t.tipo}">${t.departamento}</span><br><strong>${t.id}</strong><p>${t.solicitante}</p><small>SLA: ${t.sla}</small><br><small>${t.diagnostico}</small>`;
         cols[t.estado]?.appendChild(card);
     });
 }
@@ -157,11 +152,11 @@ function drop(ev) {
     }
 }
 
-// EXCEL (CORREGIDO UTF-8 BOM PARA ACENTOS)
+// EXCEL (CORREGIDO UTF-8 BOM)
 function exportToExcel() {
     if (!tickets.length) return showAlert("Sin datos", "No hay registros para exportar.");
-    let csv = "\ufeffID,Solicitante,Departamento,Diagnostico,Estado,Fecha\n" + 
-              tickets.map(t => `${t.id},${t.solicitante},${t.departamento},${t.diagnostico},${t.estado},${t.fecha}`).join("\n");
+    let csv = "\ufeffID,Solicitante,Departamento,Diagnostico,SLA,Estado,Fecha\n" + 
+              tickets.map(t => `${t.id},${t.solicitante},${t.departamento},${t.diagnostico},${t.sla},${t.estado},${t.fecha}`).join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     link.download = "Reporte_Incidentes_UMA.csv";
