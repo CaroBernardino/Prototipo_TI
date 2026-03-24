@@ -24,18 +24,18 @@
         <section id="home-view" class="view">
             <div class="hero-section">
                 <h1>Centro de Resolución</h1>
-                <p>Seleccione el servicio afectado para iniciar la resolución autónoma.</p>
+                <p>Seleccione el servicio afectado para iniciar la resolución autónoma de Nivel 0.</p>
             </div>
             <nav class="portal-grid">
                 <button class="support-card" onclick="startFlow('perifericos')">
                     <div class="card-icon">⌨️</div>
                     <h2>Fallas en periféricos (teclados/monitores)</h2>
-                    <p>Sustitución menor y diagnóstico de hardware.</p>
+                    <p>Sustitución menor y diagnóstico físico de hardware.</p>
                 </button>
                 <button class="support-card" onclick="startFlow('onedrive')">
                     <div class="card-icon">☁️</div>
                     <h2>Permisos y Cuotas OneDrive</h2>
-                    <p>Gestión de espacio y acceso a carpetas.</p>
+                    <p>Gestión de espacio y acceso a carpetas en la nube.</p>
                 </button>
             </nav>
         </section>
@@ -61,13 +61,13 @@
                         <p>Verifique que el puerto USB no tenga polvo o pelusa. Intente conectar el dispositivo en una ranura USB diferente.</p>
                         <div class="btn-group">
                             <button class="btn-solved" onclick="solvedAction()">✅ ¡Solucionado!</button>
-                            <button class="btn-black" onclick="nextStep(3)">Sigue igual</button>
+                            <button class="btn-black" onclick="nextStep(3)">Sigue fallando</button>
                         </div>
                     </div>
                     <div id="step-3" class="step">
                         <span class="step-tag">Paso 3: Seguridad</span>
                         <h3>Inspección Física del Cable</h3>
-                        <p>¿El cable presenta daños visibles, está pelado o roto? Esto requiere un reemplazo inmediato por seguridad.</p>
+                        <p>¿El cable presenta daños visibles, está pelado o roto? Requiere un reemplazo inmediato por seguridad institucional.</p>
                         <div class="btn-group">
                             <button class="btn-danger" onclick="setEscalation('L1 - Daño Físico'); nextStep(6);">Sí, está roto</button>
                             <button class="btn-black" onclick="nextStep(4)">El cable está bien</button>
@@ -76,10 +76,10 @@
                     <div id="step-4" class="step">
                         <span class="step-tag">Paso 4: Software</span>
                         <h3>Prueba de Configuración</h3>
-                        <p>Presione la tecla Windows + P. ¿Aparece el menú de proyección o el teclado reacciona a los comandos?</p>
+                        <p>Presione la tecla Windows + P. ¿Aparece el menú de proyección o el teclado reacciona a los comandos del sistema?</p>
                         <div class="btn-group">
                             <button class="btn-solved" onclick="solvedAction()">✅ ¡Solucionado!</button>
-                            <button class="btn-black" onclick="setEscalation('Error de Drivers/SO'); nextStep(5);">No reacciona</button>
+                            <button class="btn-black" onclick="setEscalation('L2 - Error de Drivers/SO'); nextStep(5);">No reacciona</button>
                         </div>
                     </div>
                     <div id="step-5" class="step">
@@ -94,6 +94,7 @@
                     <div id="step-6" class="step">
                         <span class="step-tag">Final</span>
                         <h3>Registro de Incidente</h3>
+                        <p>Diagnóstico preliminar: <strong id="hw-diag-pre">L1 - Reemplazo Menor</strong></p>
                         <input type="text" id="user-name" placeholder="Tu nombre completo" class="modern-input">
                         <button class="btn-submit" onclick="generateTicket('Soporte Hardware')">Crear Ticket Hardware</button>
                     </div>
@@ -117,8 +118,8 @@
                     </div>
                     <div id="od-step-cuota-1" class="step">
                         <span class="step-tag">Espacio</span>
-                        <h3>Limpieza de Datos</h3>
-                        <p>Vacíe la papelera de reciclaje y elimine archivos antiguos ordenando por tamaño en "Mis Archivos".</p>
+                        <h3>Gestión de Espacio</h3>
+                        <p>Vacíe la papelera de reciclaje y elimine archivos pesados antiguos en "Mis Archivos".</p>
                         <div class="btn-group">
                             <button class="btn-solved" onclick="solvedAction()">✅ ¡Solucionado!</button>
                             <button class="btn-black" onclick="prepareTicketOD('Límite de Capacidad (Cuota)')">Sigo sin espacio</button>
@@ -127,7 +128,7 @@
                     <div id="od-step-permisos-1" class="step">
                         <span class="step-tag">Acceso</span>
                         <h3>Gestión de Permisos</h3>
-                        <p>Verifique su cuenta o solicite acceso al propietario mediante la notificación automática de permisos.</p>
+                        <p>Verifique su cuenta institucional o solicite acceso al propietario mediante la notificación automática.</p>
                         <div class="btn-group">
                             <button class="btn-solved" onclick="solvedAction()">✅ Solicitado</button>
                             <button class="btn-black" onclick="prepareTicketOD('Falla de acceso (Permisos)')">Error persistente</button>
@@ -145,7 +146,10 @@
 
         <section id="dashboard-view" class="view hidden">
             <header class="dashboard-header">
-                <div class="header-info"><h2>Panel de Gestión</h2><p>Triage activo por servicio y diagnóstico.</p></div>
+                <div class="header-info">
+                    <h2>Panel de Gestión</h2>
+                    <p>Monitoreo de cumplimiento (SOP).</p>
+                </div>
                 <div class="dashboard-controls">
                     <div class="view-switcher">
                         <button id="btn-list" onclick="switchDashboardView('table')">Lista</button>
@@ -154,16 +158,29 @@
                     <button class="btn-export" onclick="exportToExcel()">📥 Exportar CSV</button>
                 </div>
             </header>
+
             <div id="table-container" class="table-wrapper">
                 <table class="modern-table">
-                    <thead><tr><th>ID</th><th>Solicitante</th><th>Categoría</th><th>Diagnóstico</th><th>Estado</th></tr></thead>
+                    <thead>
+                        <tr><th>ID</th><th>Solicitante</th><th>Categoría</th><th>Diagnóstico</th><th>SLA</th><th>Estado</th></tr>
+                    </thead>
                     <tbody id="ticket-body"></tbody>
                 </table>
             </div>
+
             <div id="kanban-container" class="kanban-board hidden">
-                <div class="kanban-col" id="col-Abierto" ondrop="drop(event)" ondragover="allowDrop(event)"><div class="col-header"><span class="dot red"></span> Abiertos</div><div class="kanban-cards"></div></div>
-                <div class="kanban-col" id="col-En-Proceso" ondrop="drop(event)" ondragover="allowDrop(event)"><div class="col-header"><span class="dot orange"></span> En Proceso</div><div class="kanban-cards"></div></div>
-                <div class="kanban-col" id="col-Resuelto" ondrop="drop(event)" ondragover="allowDrop(event)"><div class="col-header"><span class="dot green"></span> Resueltos</div><div class="kanban-cards"></div></div>
+                <div class="kanban-col" id="col-Abierto" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="col-header"><span class="dot red"></span> Abiertos</div>
+                    <div class="kanban-cards"></div>
+                </div>
+                <div class="kanban-col" id="col-En-Proceso" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="col-header"><span class="dot orange"></span> En Proceso</div>
+                    <div class="kanban-cards"></div>
+                </div>
+                <div class="kanban-col" id="col-Resuelto" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    <div class="col-header"><span class="dot green"></span> Resueltos</div>
+                    <div class="kanban-cards"></div>
+                </div>
             </div>
         </section>
     </div>
